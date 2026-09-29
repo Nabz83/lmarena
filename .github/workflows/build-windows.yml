@@ -1,0 +1,86 @@
+name: Build Windows executable
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: PyInstaller one-file .exe
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Run the test suite (fail fast before packaging)
+        env:
+          SDL_VIDEODRIVER: dummy
+          SDL_AUDIODRIVER: dummy
+        run: python -m pytest tests -q
+
+      - name: Generate the application icon
+        env:
+          SDL_VIDEODRIVER: dummy
+          SDL_AUDIODRIVER: dummy
+        run: python tools/make_icon.py
+
+      - name: Build NeonSurvivor.exe
+        run: python -m PyInstaller NeonSurvivor.spec --noconfirm --clean
+
+      - name: Collect the executable and its licence files
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path package | Out-Null
+          Copy-Item dist\NeonSurvivor.exe package\ -Force
+          Copy-Item LICENSE, LICENSE-NOTES.md, README.md package\ -Force
+          Compress-Archive -Path package\* -DestinationPath NeonSurvivor-Windows-x64.zip -Force
+          Get-ChildItem package | Format-Table Name, Length
+          Get-FileHash dist\NeonSurvivor.exe -Algorithm SHA256 |
+            Format-List | Tee-Object -FilePath package\sha256.txt
+
+      - name: Smoke-test the built executable
+        shell: pwsh
+        run: |
+          # Boot the frozen app for 120 frames and make sure it exits cleanly.
+          $p = Start-Process -FilePath "dist\NeonSurvivor.exe" `
+                -ArgumentList "--frames", "120" -PassThru -Wait -NoNewWindow
+          if ($p.ExitCode -ne 0) { throw "Executable exited with code $($p.ExitCode)" }
+          Write-Host "Smoke test OK (exit code $($p.ExitCode))"
+
+      - name: Upload the executable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NeonSurvivor-Windows-x64
+          path: |
+            dist/NeonSurvivor.exe
+            NeonSurvivor-Windows-x64.zip
+            package/sha256.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish the executable in a GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/NeonSurvivor.exe
+            NeonSurvivor-Windows-x64.zip
+          generate_release_notes: true
