@@ -1,0 +1,6 @@
+-r requirements.txt
+
+# Test + lint + packaging toolchain (all permissive licences).
+pytest>=8          # MIT
+pyflakes>=3        # MIT
+pyinstaller>=6.6   # GPL-2.0-or-later WITH a bundling exception (see LICENSE-NOTES)

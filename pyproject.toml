@@ -1,0 +1,53 @@
+# Neon Survivor — build configuration
+#
+# The game is a plain pygame-ce application: there is nothing to compile, so
+# PyInstaller only bundles the interpreter, the package and the SDL libraries.
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neon-survivor"
+version = "1.0.0"
+description = "Neon Survivor - a procedurally drawn 2D top-down action/survival game."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "lmarena" }]
+keywords = ["game", "pygame", "survival", "arcade", "top-down", "roguelite"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: X11 Applications",
+    "Environment :: Win32 (MS Windows)",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Games/Entertainment :: Arcade",
+]
+dependencies = ["pygame-ce>=2.5,<3"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pyflakes>=3", "pyinstaller>=6.6"]
+
+[project.gui-scripts]
+neon-survivor = "neon_survivor.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/Nabz83/lmarena"
+Repository = "https://github.com/Nabz83/lmarena"
+Issues = "https://github.com/Nabz83/lmarena/issues"
+
+[tool.setuptools.packages.find]
+include = ["neon_survivor*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["error::DeprecationWarning:neon_survivor.*"]
+
+[tool.pyflakes]
+# The project follows PEP 8 naming: snake_case functions, CapWords classes.
+builtins = ""

@@ -1,0 +1,4 @@
+# Runtime dependency.  pygame-ce is a community fork of pygame distributed
+# under the LGPL 2.1, which allows redistribution inside a proprietary or
+# MIT-licensed executable provided the licence and source offer are kept.
+pygame-ce>=2.5,<3
